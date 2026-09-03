@@ -34,8 +34,14 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
         scheduler.step()
         
         
-
-        log = f'Epoch [{epoch+1}/{config['epochs']}], Loss: {train_loss[-1]:.2f}, ADE: {trainADE[-1]:.3f}, FDE: {trainFDE[-1]:.2f}'
+        #改：语法错误
+        # log = f'Epoch [{epoch+1}/{config['epochs']}], Loss: {train_loss[-1]:.2f}, ADE: {trainADE[-1]:.3f}, FDE: {trainFDE[-1]:.2f}'
+        log = (
+            f"Epoch [{epoch + 1}/{config['epochs']}], "
+            f"Loss: {train_loss[-1]:.2f}, "
+            f"ADE: {trainADE[-1]:.3f}, "
+            f"FDE: {trainFDE[-1]:.2f}"
+        )
         savelog(log, config['ct'])
         # Saving the best model to the file
         if train_loss[-1] < prev_average_loss: # checkpoint update
