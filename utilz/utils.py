@@ -276,13 +276,17 @@ def DataLoader_Scene(datasettr, datasettst, datasetval, batch_size):
     return train_loader, test_loader, val_loader
 
 
-def loadcsv(frmpath, Header, trjpath = None):
-    df = pd.read_csv(frmpath, dtype =float)
-    df.columns = Header
-    if trjpath is not None:
-        trj = pd.read_csv(trjpath, dtype =float)
-        return df, trj
-    return df
+def loadcsv(frmpath, Header, trjpath=None):
+      df = pd.read_csv(frmpath, header=None, dtype=float)
+      df.columns = Header
+
+      if trjpath is not None:
+          trj = pd.read_csv(trjpath, header=None, dtype=float)
+          if len(trj.columns) == len(Header):
+              trj.columns = Header
+          return df, trj
+
+      return df
 
 
 def savelog(log, ct): # appends the log to the existing log file while keeping the old logs
