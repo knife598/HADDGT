@@ -1,3 +1,5 @@
+import copy
+
 import torch
 from torch import nn
 from utilz.utils import *
@@ -10,8 +12,15 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
     eos = config['eos']
     train_loss, prev_average_loss, patience= [],  10000000.0, 0
     trainFDE, trainADE = [], []
-    Best_Model = []
+    # Keep an independent snapshot of the best parameters.  Assigning
+    # ``Best_Model = model`` would only keep a reference to the object that
+    # continues to be updated in later epochs.
+    Best_Model = copy.deepcopy(model)
     for epoch in range(config['epochs']):
+        #打印当前epoch的学习率
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f"Epoch {epoch + 1}: learning rate = {current_lr:.8f}")
+        #
         model.train()
         epoch_losses, epoch_ADE, epoch_FDE = [], [], []
         for Scene, Target, Adj_Mat_Scene in train_loader: # Scene & Taget => [B, SL0, Nnodes, Features], Adj_Mat_Scene => [B, SL, Nnodes, Nnodes]
@@ -47,7 +56,7 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
         if train_loss[-1] < prev_average_loss: # checkpoint update
             prev_average_loss = train_loss[-1]  # Update previous average loss
             patience = 0
-            Best_Model = model
+            Best_Model = copy.deepcopy(model)
         elif patience > patience_limit:
                 savelog(f'early stopping, Patience lvl1 , lvl2 {patience}', config['ct'])
                 break
