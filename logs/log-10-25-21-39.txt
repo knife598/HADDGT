@@ -5,9 +5,9 @@ Using cuda:3 device
 model_name = HDAAGT
 description = No fisheye parameters + Temperature + 4s length
 verbal = True
-detection_path = data/Fisheye-MARC.csv
+detection_path = /home/ky1/sjkx/data/Fisheye-sinD.csv
 Zoneconf_path = configs/ZoneConf.yaml
-generate_data = False
+generate_data = True
 Load_Model = False
 Load_Model_Path = Pickled/best_trained_model05-22-09-03.pth
 Train = True
@@ -34,8 +34,8 @@ sos = [1008, 1008, 10, 7, 7, 7, 7]
 eos = [1016, 1016, 11, 8, 8, 8, 8]
 NZones = 10
 NTrfL = 4
-sl = 20
-future = 20
+sl = 30
+future = 30
 sw = 4
 sn = 10
 Centre = [512, 512]
@@ -55,9 +55,6 @@ seed = 42
 NFeatures = 7
 input_size = 24
 output_size = 2
-ct = 09-19-13-55
-Starting at:  13-55-15
-Loading data ...
-Train size: 16980, Test size: 310, Validation size: 0
-Creating model from scratch
-The number of learnable parameter is 3947038 !
+ct = 10-25-21-39
+Starting at:  21-39-13
+Loading CSV file ...

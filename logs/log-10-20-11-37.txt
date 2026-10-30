@@ -1,6 +1,6 @@
 
 Total  # of GPUs 4
-Using cuda:3 device
+Using cpu device
  Model description: No fisheye parameters + Temperature + 4s length
 model_name = HDAAGT
 description = No fisheye parameters + Temperature + 4s length
@@ -11,8 +11,8 @@ generate_data = False
 Load_Model = False
 Load_Model_Path = Pickled/best_trained_model05-22-09-03.pth
 Train = True
-Test = True
-Test_during_training = True
+Test = False
+Test_during_training = False
 hidden_size = 128
 num_heads = 4
 Nusers = 32
@@ -46,18 +46,18 @@ noise_ratio = 0.5
 learning_rate = 0.001
 schd_stepzise = 12
 gamma = 0.2
-epochs = 45
+epochs = 1
 patience_limit = 5
 clip = 0.25
-batch_size = 128
-device = cuda:3
+batch_size = 2
+device = cpu
 seed = 42
 NFeatures = 7
 input_size = 24
 output_size = 2
-ct = 09-19-13-59
-Starting at:  13-59-42
+ct = 10-20-11-37
+Starting at:  11-37-27
 Loading data ...
-Train size: 16980, Test size: 310, Validation size: 0
+Train size: 21180, Test size: 390, Validation size: 0
 Creating model from scratch
 The number of learnable parameter is 3947038 !

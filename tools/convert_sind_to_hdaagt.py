@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-import math
+import json
 from pathlib import Path
 
 
@@ -128,6 +128,20 @@ def main() -> None:
     print(f"Wrote {len(rows)} rows to {args.out}")
     print(f"Coordinate bounds: x=[{min_x}, {max_x}], y=[{min_y}, {max_y}]")
     print(f"Traffic rows matched: {sum(1 for r in rows if int(float(r['frame_id'])) in traffic)}")
+
+    meta_path = args.out.with_suffix(".meta.json")
+    meta = {
+        "coordinate_system": "SinD metric coordinates linearly discretized to 0..1023",
+        "grid_size": 1024,
+        "min_x": min_x,
+        "max_x": max_x,
+        "min_y": min_y,
+        "max_y": max_y,
+        "source_vehicle_file": str(args.vehicle),
+    }
+    with meta_path.open("w", encoding="utf-8") as handle:
+        json.dump(meta, handle, indent=2)
+    print(f"Wrote metric metadata to {meta_path}")
 
 
 if __name__ == "__main__":
