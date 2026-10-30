@@ -1,0 +1,3 @@
+
+Train size: 21180, Test size: 390, Validation size: 0
+Creating model from scratch

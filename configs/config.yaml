@@ -3,8 +3,8 @@
 # General startup parameters
 model_name: "HDAAGT"
 description: "No fisheye parameters + Temperature + 4s length"
-verbal: false # If true, it will print the configs parameters
-detection_path: 'data/Fisheye-MARC.csv'
+verbal: true # If true, it will print the configs parameters
+detection_path: '/home/ky1/sjkx/data/Fisheye-sinD_noheader.csv'
 Zoneconf_path: 'configs/ZoneConf.yaml'
 generate_data: true #  Add class by loading the CSV file
 Load_Model: false # It's for creating model from scratch
@@ -17,8 +17,8 @@ Test_during_training: true # It's for testing the model during training
 # Model Architecture parameters
 hidden_size: 128
 num_heads: 4
-Nusers: 32 # This is the number of users in the dataset for Graph Attention
-Nnodes: 32 # This should be the same as Nusers
+Nusers: 64 # This is the number of users in the dataset for Graph Attention
+Nnodes: 64 # This should be the same as Nusers
 Num_linear_inputs: 17
 concat: False
 dropout: 0.2
@@ -39,8 +39,8 @@ sos: [1008,1008, 10, 7,7,7,7] # This is the start of the sequence for categorica
 eos: [1016,1016, 11, 8,8,8,8] # This is the end of the sequence for categorical variables
 NZones: 10
 NTrfL: 4
-sl: 30 # sequence length
-future: 30 # future prediction horizon
+sl: 20 # sequence length
+future: 20 # future prediction horizon
 sw: 4 # sliding window for preparation of the dataset
 sn: 10 # 
 Centre: [512,512] # The centre of the image
@@ -52,10 +52,10 @@ noise_ratio: 0.5 # probability of the noise
 
 
 # Training parameters
-learning_rate: !!float 8e-04
+learning_rate: !!float 10e-4     #测试1：单独把将学习率从 8e-4 改为论文的 2e-4；结果变得很差
 schd_stepzise: 12
 gamma: 0.2
-epochs: 45
+epochs: 45      #测试2：将epoch从45改为22：结果变差；ADE 16.07，FDE 20.23->ADE 23.79，FDE 29.31
 patience_limit: 5
 clip: 0.25
 batch_size: 128

@@ -1,0 +1,117 @@
+
+Total  # of GPUs 4
+Using cuda:3 device
+ Model description: No fisheye parameters + Temperature + 4s length
+model_name = HDAAGT
+description = No fisheye parameters + Temperature + 4s length
+verbal = True
+detection_path = data/SinD/Tianjin_8_2_1.csv
+Zoneconf_path = configs/ZoneConf.yaml
+generate_data = True
+Load_Model = False
+Load_Model_Path = Pickled/best_trained_model05-22-09-03.pth
+Train = True
+Test = True
+Test_during_training = True
+hidden_size = 128
+num_heads = 4
+Nusers = 64
+Nnodes = 64
+Num_linear_inputs = 17
+concat = False
+dropout = 0.2
+output_dict_size = 1024
+Headers = ['Frame', 'ID', 'BBx', 'BBy', 'W', 'L', 'Cls', 'Tr1', 'Tr2', 'Tr3', 'Tr4', 'Zone', 'Xreal', 'Yreal']
+Columns_to_keep = [2, 3, 11, 7, 8, 9, 10]
+trf_embedding_dict_size = [12, 9, 9, 9, 9]
+trf_embedding_dim = [64, 48, 48, 48, 48]
+pos_embedding_dict_size = [1024, 1024]
+pos_embedding_dim = [128, 128]
+xy_indx = [0, 1]
+Traffic_indx = [2, 3, 4, 5, 6]
+Linear_indx = [9]
+sos = [1008, 1008, 10, 7, 7, 7, 7]
+eos = [1016, 1016, 11, 8, 8, 8, 8]
+NZones = 10
+NTrfL = 4
+sl = 30
+future = 30
+sw = 4
+sn = 10
+Centre = [512, 512]
+dwn_smple = 2
+noise_multiply = 5
+noise_amp = 3
+noise_ratio = 0.5
+learning_rate = 0.001
+schd_stepzise = 12
+gamma = 0.2
+epochs = 45
+patience_limit = 5
+clip = 0.25
+batch_size = 128
+device = cuda:3
+seed = 42
+NFeatures = 7
+input_size = 24
+output_size = 2
+ct = 09-21-22-52
+Starting at:  22-52-42
+Loading CSV file ...
+Train size: 108, Test size: 12, Validation size: 0 
+Randomly splitting the data
+Train size: 6480, Test size: 120, Validation size: 0
+Creating model from scratch
+The number of learnable parameter is 3951198 !
+Epoch [1/45], Loss: 6.03, ADE: 0.000, FDE: 0.00
+Epoch [2/45], Loss: 3.94, ADE: 0.000, FDE: 0.00
+Epoch [3/45], Loss: 1.70, ADE: 0.000, FDE: 0.00
+Epoch [4/45], Loss: 0.44, ADE: 0.000, FDE: 0.00
+Starting testing phase
+ADE is : 1.052 px 
+ FDE is: 0.684 px 
+ Inference time: 943.488 ms
+During Training, Test ADE: 1.05, FDE: 0.68
+Epoch [5/45], Loss: 0.14, ADE: 0.000, FDE: 0.00
+Epoch [6/45], Loss: 0.06, ADE: 0.000, FDE: 0.00
+Epoch [7/45], Loss: 0.03, ADE: 0.000, FDE: 0.00
+Epoch [8/45], Loss: 0.02, ADE: 0.000, FDE: 0.00
+Epoch [9/45], Loss: 0.02, ADE: 0.000, FDE: 0.00
+Starting testing phase
+ADE is : 1.064 px 
+ FDE is: 0.714 px 
+ Inference time: 945.980 ms
+During Training, Test ADE: 1.06, FDE: 0.71
+Epoch [10/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [11/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [12/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [13/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [14/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Starting testing phase
+ADE is : 0.883 px 
+ FDE is: 0.612 px 
+ Inference time: 947.072 ms
+During Training, Test ADE: 0.88, FDE: 0.61
+Epoch [15/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [16/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [17/45], Loss: 0.01, ADE: 0.000, FDE: 0.00
+Epoch [18/45], Loss: nan, ADE: nan, FDE: nan
+Epoch [19/45], Loss: nan, ADE: nan, FDE: nan
+Starting testing phase
+ADE is : nan px 
+ FDE is: nan px 
+ Inference time: 929.553 ms
+During Training, Test ADE: nan, FDE: nan
+Epoch [20/45], Loss: nan, ADE: nan, FDE: nan
+Epoch [21/45], Loss: nan, ADE: nan, FDE: nan
+Epoch [22/45], Loss: nan, ADE: nan, FDE: nan
+Epoch [23/45], Loss: nan, ADE: nan, FDE: nan
+early stopping, Patience lvl1 , lvl2 6
+Saving result of Learning rate: 0.001, Hidden size: 128, Batch size: 128
+Best checkpoint saved to /home/ky1/sjkx/HDAAGT_J/Pickled/best_trained_model_09-21-22-52.pth
+Training finished for 09-21-22-52!
+Starting testing phase
+ADE is : 0.997 px 
+ FDE is: 0.631 px 
+ Inference time: 952.508 ms
+Average Displacement Error: 0.997 px (0.083 m), Final Displacement Error: 0.631 px (0.053 m)

@@ -1,0 +1,163 @@
+
+Total  # of GPUs 4
+Using cuda:3 device
+ Model description: No fisheye parameters + Temperature + 4s length
+model_name = HDAAGT
+description = No fisheye parameters + Temperature + 4s length
+verbal = True
+detection_path = /home/ky1/sjkx/data/Fisheye-sinD_noheader.csv
+Zoneconf_path = configs/ZoneConf.yaml
+generate_data = True
+Load_Model = False
+Load_Model_Path = Pickled/best_trained_model05-22-09-03.pth
+Train = True
+Test = True
+Test_during_training = True
+hidden_size = 128
+num_heads = 4
+Nusers = 64
+Nnodes = 64
+Num_linear_inputs = 17
+concat = False
+dropout = 0.2
+output_dict_size = 1024
+Headers = ['Frame', 'ID', 'BBx', 'BBy', 'W', 'L', 'Cls', 'Tr1', 'Tr2', 'Tr3', 'Tr4', 'Zone', 'Xreal', 'Yreal']
+Columns_to_keep = [2, 3, 11, 7, 8, 9, 10]
+trf_embedding_dict_size = [12, 9, 9, 9, 9]
+trf_embedding_dim = [64, 48, 48, 48, 48]
+pos_embedding_dict_size = [1024, 1024]
+pos_embedding_dim = [128, 128]
+xy_indx = [0, 1]
+Traffic_indx = [2, 3, 4, 5, 6]
+Linear_indx = [9]
+sos = [1008, 1008, 10, 7, 7, 7, 7]
+eos = [1016, 1016, 11, 8, 8, 8, 8]
+NZones = 10
+NTrfL = 4
+sl = 20
+future = 20
+sw = 4
+sn = 10
+Centre = [512, 512]
+dwn_smple = 2
+noise_multiply = 5
+noise_amp = 3
+noise_ratio = 0.5
+learning_rate = 0.001
+schd_stepzise = 12
+gamma = 0.2
+epochs = 45
+patience_limit = 5
+clip = 0.25
+batch_size = 128
+device = cuda:3
+seed = 42
+NFeatures = 7
+input_size = 24
+output_size = 2
+ct = 10-26-15-10
+Starting at:  15-10-11
+Loading CSV file ...
+Train size: 129, Test size: 14, Validation size: 1 
+Randomly splitting the data
+Train size: 7740, Test size: 150, Validation size: 0
+Creating model from scratch
+The number of learnable parameter is 3949342 !
+Epoch [1/45], Loss: 5.99, ADE: 89.805, FDE: 88.05
+Epoch [2/45], Loss: 3.98, ADE: 104.804, FDE: 103.94
+Epoch [3/45], Loss: 2.34, ADE: 99.771, FDE: 99.30
+Epoch [4/45], Loss: 1.38, ADE: 82.029, FDE: 82.24
+Starting testing phase
+ADE is : 53.653 px 
+ FDE is: 53.078 px 
+ Inference time: 773.400 ms
+During Training, Test ADE: 53.65, FDE: 53.08
+Epoch [5/45], Loss: 0.82, ADE: 54.189, FDE: 54.80
+Epoch [6/45], Loss: 0.58, ADE: 38.219, FDE: 38.62
+Epoch [7/45], Loss: 0.49, ADE: 31.287, FDE: 31.48
+Epoch [8/45], Loss: 0.44, ADE: 26.866, FDE: 26.75
+Epoch [9/45], Loss: 0.40, ADE: 23.975, FDE: 23.93
+Starting testing phase
+ADE is : 19.217 px 
+ FDE is: 18.630 px 
+ Inference time: 735.423 ms
+During Training, Test ADE: 19.22, FDE: 18.63
+Epoch [10/45], Loss: 0.37, ADE: 21.391, FDE: 21.28
+Epoch [11/45], Loss: 0.34, ADE: 18.848, FDE: 18.70
+Epoch [12/45], Loss: 0.32, ADE: 16.424, FDE: 16.30
+Epoch [13/45], Loss: 0.31, ADE: 15.288, FDE: 15.20
+Epoch [14/45], Loss: 0.30, ADE: 14.933, FDE: 14.84
+Starting testing phase
+ADE is : 12.913 px 
+ FDE is: 11.964 px 
+ Inference time: 736.836 ms
+During Training, Test ADE: 12.91, FDE: 11.96
+Epoch [15/45], Loss: 0.30, ADE: 14.633, FDE: 14.54
+Epoch [16/45], Loss: 0.30, ADE: 14.362, FDE: 14.29
+Epoch [17/45], Loss: 0.29, ADE: 14.086, FDE: 14.03
+Epoch [18/45], Loss: 0.29, ADE: 13.830, FDE: 13.77
+Epoch [19/45], Loss: 0.29, ADE: 13.552, FDE: 13.52
+Starting testing phase
+ADE is : 11.559 px 
+ FDE is: 10.656 px 
+ Inference time: 739.267 ms
+During Training, Test ADE: 11.56, FDE: 10.66
+Epoch [20/45], Loss: 0.28, ADE: 13.310, FDE: 13.27
+Epoch [21/45], Loss: 0.28, ADE: 13.053, FDE: 13.01
+Epoch [22/45], Loss: 0.28, ADE: 12.789, FDE: 12.76
+Epoch [23/45], Loss: 0.28, ADE: 12.519, FDE: 12.51
+Epoch [24/45], Loss: 0.27, ADE: 12.275, FDE: 12.27
+Starting testing phase
+ADE is : 10.254 px 
+ FDE is: 9.431 px 
+ Inference time: 751.118 ms
+During Training, Test ADE: 10.25, FDE: 9.43
+Epoch [25/45], Loss: 0.27, ADE: 12.091, FDE: 12.10
+Epoch [26/45], Loss: 0.27, ADE: 12.037, FDE: 12.01
+Epoch [27/45], Loss: 0.27, ADE: 11.994, FDE: 12.00
+Epoch [28/45], Loss: 0.27, ADE: 11.940, FDE: 11.92
+Epoch [29/45], Loss: 0.27, ADE: 11.896, FDE: 11.88
+Starting testing phase
+ADE is : 10.020 px 
+ FDE is: 9.200 px 
+ Inference time: 745.615 ms
+During Training, Test ADE: 10.02, FDE: 9.20
+Epoch [30/45], Loss: 0.27, ADE: 11.850, FDE: 11.85
+Epoch [31/45], Loss: 0.27, ADE: 11.777, FDE: 11.76
+Epoch [32/45], Loss: 0.27, ADE: 11.743, FDE: 11.75
+Epoch [33/45], Loss: 0.27, ADE: 11.680, FDE: 11.67
+Epoch [34/45], Loss: 0.27, ADE: 11.627, FDE: 11.64
+Starting testing phase
+ADE is : 9.761 px 
+ FDE is: 8.989 px 
+ Inference time: 739.335 ms
+During Training, Test ADE: 9.76, FDE: 8.99
+Epoch [35/45], Loss: 0.27, ADE: 11.569, FDE: 11.56
+Epoch [36/45], Loss: 0.26, ADE: 11.513, FDE: 11.50
+Epoch [37/45], Loss: 0.26, ADE: 11.476, FDE: 11.44
+Epoch [38/45], Loss: 0.26, ADE: 11.460, FDE: 11.42
+Epoch [39/45], Loss: 0.26, ADE: 11.456, FDE: 11.46
+Starting testing phase
+ADE is : 9.571 px 
+ FDE is: 8.790 px 
+ Inference time: 782.254 ms
+During Training, Test ADE: 9.57, FDE: 8.79
+Epoch [40/45], Loss: 0.26, ADE: 11.427, FDE: 11.41
+Epoch [41/45], Loss: 0.26, ADE: 11.438, FDE: 11.44
+Epoch [42/45], Loss: 0.26, ADE: 11.423, FDE: 11.43
+Epoch [43/45], Loss: 0.26, ADE: 11.415, FDE: 11.41
+Epoch [44/45], Loss: 0.26, ADE: 11.393, FDE: 11.39
+Starting testing phase
+ADE is : 9.515 px 
+ FDE is: 8.769 px 
+ Inference time: 741.513 ms
+During Training, Test ADE: 9.51, FDE: 8.77
+Epoch [45/45], Loss: 0.26, ADE: 11.371, FDE: 11.38
+Saving result of Learning rate: 0.001, Hidden size: 128, Batch size: 128
+Best checkpoint saved to /home/ky1/sjkx/HDAAGT_J/Pickled/best_trained_model_10-26-15-10.pth
+Training finished for 10-26-15-10!
+Starting testing phase
+ADE is : 9.503 px 
+ FDE is: 8.761 px 
+ Inference time: 739.198 ms
+Average Displacement Error: 9.503 px (0.792 m), Final Displacement Error: 8.761 px (0.730 m)
