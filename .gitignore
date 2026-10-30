@@ -14,3 +14,6 @@ Notes.md
 data/ModifiedData.csv
 test.py
 test_all.py
+
+codex_readme/
+.txt

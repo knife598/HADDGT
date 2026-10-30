@@ -1,6 +1,7 @@
 # export cuda_visible_devices=2,3
 import argparse
 import datetime
+import json
 import os
 import random
 
@@ -74,6 +75,18 @@ if __name__ == '__main__':
     config["output_size"] = len(config['xy_indx'])
     config['device'] = device
     config['ct'] = ct
+    metric_meta_path = os.path.splitext(config['detection_path'])[0] + '.meta.json'
+    if os.path.exists(metric_meta_path):
+        with open(metric_meta_path, encoding='utf-8') as meta_file:
+            metric_meta = json.load(meta_file)
+        config['metric_coord_bounds'] = {
+            'grid_size': metric_meta.get('grid_size', 1024),
+            'min_x': metric_meta['min_x'],
+            'max_x': metric_meta['max_x'],
+            'min_y': metric_meta['min_y'],
+            'max_y': metric_meta['max_y'],
+        }
+        savelog(f"Loaded metric coordinate metadata from {metric_meta_path}", ct)
     log_code = f"Learning rate: {config['learning_rate']}, Hidden size: {config['hidden_size']}, Batch size: {config['batch_size']}"
     if config['verbal']:
         for arg in config.items():
@@ -134,9 +147,16 @@ if __name__ == '__main__':
     eval_model = Best_Model if config['Train'] else model
     if config['Test']:
         Topk_Selected_words, ADE, FDE = test_model(eval_model, test_loader, config)
-        px_to_m = 0.75 / 9.0
-        savelog(
-            f"Average Displacement Error: {ADE:.3f} px ({ADE * px_to_m:.3f} m), "
-            f"Final Displacement Error: {FDE:.3f} px ({FDE * px_to_m:.3f} m)",
-            ct,
-        )
+        if 'last_ADE_m' in config and 'last_FDE_m' in config:
+            savelog(
+                f"Average Displacement Error: {ADE:.3f} grid ({config['last_ADE_m']:.3f} m), "
+                f"Final Displacement Error: {FDE:.3f} grid ({config['last_FDE_m']:.3f} m)",
+                ct,
+            )
+        else:
+            px_to_m = 0.75 / 9.0
+            savelog(
+                f"Average Displacement Error: {ADE:.3f} px ({ADE * px_to_m:.3f} m), "
+                f"Final Displacement Error: {FDE:.3f} px ({FDE * px_to_m:.3f} m)",
+                ct,
+            )

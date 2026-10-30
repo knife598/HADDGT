@@ -1,7 +1,36 @@
+import copy
+
 import torch
 from torch import nn
 from utilz.utils import *
 from models.modules import *
+
+
+def metric_errors_from_grid(Pred_xy, Target_xy, config):
+    bounds = config.get('metric_coord_bounds')
+    if not bounds:
+        return None, None
+
+    device = Pred_xy.device
+    dtype = Pred_xy.dtype
+    grid_max = float(bounds.get('grid_size', 1024) - 1)
+    min_x = torch.tensor(bounds['min_x'], device=device, dtype=dtype)
+    max_x = torch.tensor(bounds['max_x'], device=device, dtype=dtype)
+    min_y = torch.tensor(bounds['min_y'], device=device, dtype=dtype)
+    max_y = torch.tensor(bounds['max_y'], device=device, dtype=dtype)
+
+    pred_m = torch.empty_like(Pred_xy, dtype=dtype)
+    target_m = torch.empty_like(Target_xy, dtype=dtype)
+    pred_m[..., 0] = Pred_xy[..., 0] / grid_max * (max_x - min_x) + min_x
+    pred_m[..., 1] = Pred_xy[..., 1] / grid_max * (max_y - min_y) + min_y
+    target_m[..., 0] = Target_xy[..., 0] / grid_max * (max_x - min_x) + min_x
+    target_m[..., 1] = Target_xy[..., 1] / grid_max * (max_y - min_y) + min_y
+
+    flg = Target_xy[:, :, :, :1] != 0
+    dist = torch.sqrt(torch.pow((pred_m * flg - target_m * flg), 2).sum(-1))
+    ADE_m = dist.mean()
+    FDE_m = dist[:, -1].mean()
+    return ADE_m, FDE_m
 
 def train_model(model, optimizer, criterion, scheduler, train_loader, test_loader, config):
     print("Training the model ...")
@@ -10,7 +39,10 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
     eos = config['eos']
     train_loss, prev_average_loss, patience= [],  10000000.0, 0
     trainFDE, trainADE = [], []
-    Best_Model = []
+    # Keep an independent snapshot of the best parameters.  Assigning
+    # ``Best_Model = model`` would only keep a reference to the object that
+    # continues to be updated in later epochs.
+    Best_Model = copy.deepcopy(model)
     for epoch in range(config['epochs']):
         model.train()
         epoch_losses, epoch_ADE, epoch_FDE = [], [], []
@@ -47,7 +79,7 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
         if train_loss[-1] < prev_average_loss: # checkpoint update
             prev_average_loss = train_loss[-1]  # Update previous average loss
             patience = 0
-            Best_Model = model
+            Best_Model = copy.deepcopy(model)
         elif patience > patience_limit:
                 savelog(f'early stopping, Patience lvl1 , lvl2 {patience}', config['ct'])
                 break
@@ -67,6 +99,8 @@ def test_model(model, test_loader, config):
     savelog("Starting testing phase", config['ct'])
     model.eval()
     Avg_ADE, Avg_FDE, test_size = 0, 0, 0
+    Avg_ADE_m, Avg_FDE_m = 0, 0
+    has_metric = bool(config.get('metric_coord_bounds'))
     with torch.no_grad():
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
@@ -76,14 +110,29 @@ def test_model(model, test_loader, config):
             Pred_target = model(Scene, Scene_mask,Adj_Mat)
             Target = Target[:,1:-1,:, config['xy_indx']]
             Topk_Selected_words, ADE, FDE = Find_topk_selected_words(Pred_target[:,1:-1], Target)
+            ADE_m, FDE_m = metric_errors_from_grid(Topk_Selected_words, Target, config)
             test_size += Scene.size(0)
             Avg_ADE += ADE
             Avg_FDE += FDE
+            if ADE_m is not None:
+                Avg_ADE_m += ADE_m
+                Avg_FDE_m += FDE_m
         end_event.record()
         torch.cuda.synchronize()
         Avg_inference_time = start_event.elapsed_time(end_event)/test_size
         Avg_ADE, Avg_FDE = Avg_ADE/len(test_loader), Avg_FDE/len(test_loader)
-        log= f"ADE is : {Avg_ADE:.3f} px \n FDE is: {Avg_FDE:.3f} px \n Inference time: {1000*Avg_inference_time:.3f} ms"
+        if has_metric:
+            Avg_ADE_m = Avg_ADE_m/len(test_loader)
+            Avg_FDE_m = Avg_FDE_m/len(test_loader)
+            config['last_ADE_m'] = Avg_ADE_m.item()
+            config['last_FDE_m'] = Avg_FDE_m.item()
+            log= (
+                f"ADE is : {Avg_ADE:.3f} grid ({Avg_ADE_m:.3f} m) \n "
+                f"FDE is: {Avg_FDE:.3f} grid ({Avg_FDE_m:.3f} m) \n "
+                f"Inference time: {1000*Avg_inference_time:.3f} ms"
+            )
+        else:
+            log= f"ADE is : {Avg_ADE:.3f} px \n FDE is: {Avg_FDE:.3f} px \n Inference time: {1000*Avg_inference_time:.3f} ms"
         savelog(log, config['ct'])
         return Topk_Selected_words, Avg_ADE, Avg_FDE
     
