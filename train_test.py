@@ -13,23 +13,31 @@ def metric_errors_from_grid(Pred_xy, Target_xy, config):
 
     device = Pred_xy.device
     dtype = Pred_xy.dtype
-    grid_max = float(bounds.get('grid_size', 1024) - 1)
-    min_x = torch.tensor(bounds['min_x'], device=device, dtype=dtype)
-    max_x = torch.tensor(bounds['max_x'], device=device, dtype=dtype)
-    min_y = torch.tensor(bounds['min_y'], device=device, dtype=dtype)
-    max_y = torch.tensor(bounds['max_y'], device=device, dtype=dtype)
-
     pred_m = torch.empty_like(Pred_xy, dtype=dtype)
     target_m = torch.empty_like(Target_xy, dtype=dtype)
-    pred_m[..., 0] = Pred_xy[..., 0] / grid_max * (max_x - min_x) + min_x
-    pred_m[..., 1] = Pred_xy[..., 1] / grid_max * (max_y - min_y) + min_y
-    target_m[..., 0] = Target_xy[..., 0] / grid_max * (max_x - min_x) + min_x
-    target_m[..., 1] = Target_xy[..., 1] / grid_max * (max_y - min_y) + min_y
+    if 'x_grid_to_m' in bounds and 'y_grid_to_m' in bounds:
+        ax, bx = bounds['x_grid_to_m']
+        ay, by = bounds['y_grid_to_m']
+        pred_m[..., 0] = Pred_xy[..., 0] * ax + bx
+        pred_m[..., 1] = Pred_xy[..., 1] * ay + by
+        target_m[..., 0] = Target_xy[..., 0] * ax + bx
+        target_m[..., 1] = Target_xy[..., 1] * ay + by
+    else:
+        grid_max = float(bounds.get('grid_size', 1024) - 1)
+        min_x = torch.tensor(bounds['min_x'], device=device, dtype=dtype)
+        max_x = torch.tensor(bounds['max_x'], device=device, dtype=dtype)
+        min_y = torch.tensor(bounds['min_y'], device=device, dtype=dtype)
+        max_y = torch.tensor(bounds['max_y'], device=device, dtype=dtype)
+        pred_m[..., 0] = Pred_xy[..., 0] / grid_max * (max_x - min_x) + min_x
+        pred_m[..., 1] = Pred_xy[..., 1] / grid_max * (max_y - min_y) + min_y
+        target_m[..., 0] = Target_xy[..., 0] / grid_max * (max_x - min_x) + min_x
+        target_m[..., 1] = Target_xy[..., 1] / grid_max * (max_y - min_y) + min_y
 
-    flg = Target_xy[:, :, :, :1] != 0
-    dist = torch.sqrt(torch.pow((pred_m * flg - target_m * flg), 2).sum(-1))
-    ADE_m = dist.mean()
-    FDE_m = dist[:, -1].mean()
+    valid = Target_xy[..., 0] != 0
+    dist = torch.sqrt(torch.pow(pred_m - target_m, 2).sum(-1))
+    ADE_m = dist[valid].mean() if valid.any() else dist.new_zeros(())
+    final_valid = valid[:, -1]
+    FDE_m = dist[:, -1][final_valid].mean() if final_valid.any() else dist.new_zeros(())
     return ADE_m, FDE_m
 
 def train_model(model, optimizer, criterion, scheduler, train_loader, test_loader, config):
@@ -64,8 +72,7 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
         trainFDE.append(sum(epoch_FDE)/ len(train_loader))
         train_loss.append(sum(epoch_losses) / len(train_loader))
         scheduler.step()
-        
-        
+
         #改：语法错误
         # log = f'Epoch [{epoch+1}/{config['epochs']}], Loss: {train_loss[-1]:.2f}, ADE: {trainADE[-1]:.3f}, FDE: {trainFDE[-1]:.2f}'
         log = (
@@ -98,8 +105,8 @@ def test_model(model, test_loader, config):
     eos = config['eos']
     savelog("Starting testing phase", config['ct'])
     model.eval()
-    Avg_ADE, Avg_FDE, test_size = 0, 0, 0
-    Avg_ADE_m, Avg_FDE_m = 0, 0
+    ade_sum, fde_sum, ade_count, fde_count, test_size = 0, 0, 0, 0, 0
+    ade_sum_m, fde_sum_m, ade_count_m, fde_count_m = 0, 0, 0, 0
     has_metric = bool(config.get('metric_coord_bounds'))
     with torch.no_grad():
         start_event = torch.cuda.Event(enable_timing=True)
@@ -111,19 +118,29 @@ def test_model(model, test_loader, config):
             Target = Target[:,1:-1,:, config['xy_indx']]
             Topk_Selected_words, ADE, FDE = Find_topk_selected_words(Pred_target[:,1:-1], Target)
             ADE_m, FDE_m = metric_errors_from_grid(Topk_Selected_words, Target, config)
+            valid = Target[..., 0] != 0
+            final_valid = valid[:, -1]
+            pred_dist = torch.sqrt(((Topk_Selected_words - Target) ** 2).sum(-1))
             test_size += Scene.size(0)
-            Avg_ADE += ADE
-            Avg_FDE += FDE
+            ade_sum += pred_dist[valid].sum()
+            ade_count += valid.sum()
+            fde_sum += pred_dist[:, -1][final_valid].sum()
+            fde_count += final_valid.sum()
             if ADE_m is not None:
-                Avg_ADE_m += ADE_m
-                Avg_FDE_m += FDE_m
+                batch_ade_count_m = valid.sum()
+                batch_fde_count_m = final_valid.sum()
+                ade_sum_m += ADE_m * batch_ade_count_m
+                ade_count_m += batch_ade_count_m
+                fde_sum_m += FDE_m * batch_fde_count_m
+                fde_count_m += batch_fde_count_m
         end_event.record()
         torch.cuda.synchronize()
         Avg_inference_time = start_event.elapsed_time(end_event)/test_size
-        Avg_ADE, Avg_FDE = Avg_ADE/len(test_loader), Avg_FDE/len(test_loader)
+        Avg_ADE = ade_sum / ade_count.clamp_min(1)
+        Avg_FDE = fde_sum / fde_count.clamp_min(1)
         if has_metric:
-            Avg_ADE_m = Avg_ADE_m/len(test_loader)
-            Avg_FDE_m = Avg_FDE_m/len(test_loader)
+            Avg_ADE_m = ade_sum_m / ade_count_m.clamp_min(1)
+            Avg_FDE_m = fde_sum_m / fde_count_m.clamp_min(1)
             config['last_ADE_m'] = Avg_ADE_m.item()
             config['last_FDE_m'] = Avg_FDE_m.item()
             log= (
@@ -135,7 +152,7 @@ def test_model(model, test_loader, config):
             log= f"ADE is : {Avg_ADE:.3f} px \n FDE is: {Avg_FDE:.3f} px \n Inference time: {1000*Avg_inference_time:.3f} ms"
         savelog(log, config['ct'])
         return Topk_Selected_words, Avg_ADE, Avg_FDE
-    
+
 def prep_model_input(Scene, Adj_Mat_Scene,Target, sos, eos, config):
     Scene = attach_sos_eos(Scene, sos, eos)
     Adj_Mat = torch.cat((torch.ones_like(Adj_Mat_Scene[:,:1]), Adj_Mat_Scene, torch.ones_like(Adj_Mat_Scene[:,:1])), dim=1)

@@ -332,9 +332,11 @@ def Find_topk_selected_words (Pred_target, Target):
     Word_Probs = Pred_target.softmax(dim=-1)
     top_values, top_indices = torch.topk(Word_Probs, k = 5, dim=-1)
     Topk_Selected_words = (top_indices*top_values).sum(-1)/top_values.sum(-1)
-    flg = Target[:,:,:,:1] != 0 # We have blank rows in the data as the number of present agents changes during time
-    ADE = torch.sqrt(torch.pow((Topk_Selected_words*flg -Target),2).sum(-1)).mean()
-    FDE = torch.sqrt(torch.pow((Topk_Selected_words*flg -Target),2).sum(-1)[:,-1]).mean()
+    valid = Target[..., 0] != 0 # padding nodes are excluded from the metric
+    dist = torch.sqrt(torch.pow(Topk_Selected_words - Target, 2).sum(-1))
+    ADE = dist[valid].mean() if valid.any() else dist.new_zeros(())
+    final_valid = valid[:, -1]
+    FDE = dist[:, -1][final_valid].mean() if final_valid.any() else dist.new_zeros(())
     return Topk_Selected_words, ADE, FDE
 
 

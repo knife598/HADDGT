@@ -79,14 +79,25 @@ if __name__ == '__main__':
     if os.path.exists(metric_meta_path):
         with open(metric_meta_path, encoding='utf-8') as meta_file:
             metric_meta = json.load(meta_file)
-        config['metric_coord_bounds'] = {
-            'grid_size': metric_meta.get('grid_size', 1024),
-            'min_x': metric_meta['min_x'],
-            'max_x': metric_meta['max_x'],
-            'min_y': metric_meta['min_y'],
-            'max_y': metric_meta['max_y'],
-        }
+        config['metric_coord_bounds'] = {'grid_size': metric_meta.get('grid_size', 1024)}
+        for key in ('min_x', 'max_x', 'min_y', 'max_y', 'x_grid_to_m', 'y_grid_to_m'):
+            if key in metric_meta:
+                config['metric_coord_bounds'][key] = metric_meta[key]
+        if 'x_grid_to_m' in metric_meta and 'y_grid_to_m' in metric_meta:
+            savelog("Using affine SinD grid-to-meter mapping", ct)
+        elif all(key in metric_meta for key in ('min_x', 'max_x', 'min_y', 'max_y')):
+            savelog("Using min-max grid-to-meter mapping", ct)
+        else:
+            raise ValueError(
+                f"Metric metadata {metric_meta_path} must provide either "
+                "x_grid_to_m/y_grid_to_m affine coefficients or min/max coordinate bounds"
+            )
         savelog(f"Loaded metric coordinate metadata from {metric_meta_path}", ct)
+    elif 'sind' in os.path.basename(config['detection_path']).lower():
+        raise FileNotFoundError(
+            f"SinD metric metadata was not found: {metric_meta_path}. "
+            "Refusing to apply the Fisheye-MARC pixel-to-meter ratio to SinD data."
+        )
     log_code = f"Learning rate: {config['learning_rate']}, Hidden size: {config['hidden_size']}, Batch size: {config['batch_size']}"
     if config['verbal']:
         for arg in config.items():
