@@ -1,0 +1,164 @@
+
+Total  # of GPUs 4
+Using cuda:3 device
+ Model description: No fisheye parameters + Temperature + 4s length
+Using affine SinD grid-to-meter mapping
+Loaded metric coordinate metadata from /home/ky1/sjkx/data/Fisheye-sinD_noheader.meta.json
+model_name = HDAAGT
+description = No fisheye parameters + Temperature + 4s length
+verbal = True
+detection_path = /home/ky1/sjkx/data/Fisheye-sinD_noheader.csv
+Zoneconf_path = configs/ZoneConf.yaml
+generate_data = False
+Load_Model = False
+Load_Model_Path = Pickled/best_trained_model05-22-09-03.pth
+Train = True
+Test = True
+Test_during_training = True
+hidden_size = 128
+num_heads = 4
+Nusers = 64
+Nnodes = 64
+Num_linear_inputs = 17
+concat = False
+dropout = 0.2
+output_dict_size = 1024
+Headers = ['Frame', 'ID', 'BBx', 'BBy', 'W', 'L', 'Cls', 'Tr1', 'Tr2', 'Tr3', 'Tr4', 'Zone', 'Xreal', 'Yreal']
+Columns_to_keep = [2, 3, 11, 7, 8, 9, 10]
+trf_embedding_dict_size = [12, 9, 9, 9, 9]
+trf_embedding_dim = [64, 48, 48, 48, 48]
+pos_embedding_dict_size = [1024, 1024]
+pos_embedding_dim = [128, 128]
+xy_indx = [0, 1]
+Traffic_indx = [2, 3, 4, 5, 6]
+Linear_indx = [9]
+sos = [1008, 1008, 10, 7, 7, 7, 7]
+eos = [1016, 1016, 11, 8, 8, 8, 8]
+NZones = 10
+NTrfL = 4
+sl = 20
+future = 20
+sw = 4
+sn = 10
+Centre = [512, 512]
+dwn_smple = 2
+noise_multiply = 5
+noise_amp = 3
+noise_ratio = 0.5
+learning_rate = 0.001
+schd_stepzise = 12
+gamma = 0.2
+epochs = 45
+patience_limit = 5
+clip = 0.25
+batch_size = 128
+device = cuda:3
+seed = 42
+NFeatures = 7
+input_size = 24
+output_size = 2
+ct = 11-02-09-39
+metric_coord_bounds = {'grid_size': 1024, 'x_grid_to_m': [0.0902376187008333, -28.6449665834991], 'y_grid_to_m': [0.0902601551943476, -26.6013514745092]}
+Starting at:  09-39-02
+Loading data ...
+Train size: 7740, Test size: 150, Validation size: 0
+Creating model from scratch
+The number of learnable parameter is 3949342 !
+Epoch [1/45], Loss: 5.98, ADE: 253.271, FDE: 250.34
+Epoch [2/45], Loss: 3.98, ADE: 324.388, FDE: 325.44
+Epoch [3/45], Loss: 2.38, ADE: 305.832, FDE: 308.55
+Epoch [4/45], Loss: 1.57, ADE: 276.059, FDE: 278.04
+Starting testing phase
+ADE is : 231.679 grid (20.909 m) 
+ FDE is: 235.474 grid (21.251 m) 
+ Inference time: 776.991 ms
+During Training, Test ADE: 231.68, FDE: 235.47
+Epoch [5/45], Loss: 0.92, ADE: 189.746, FDE: 188.39
+Epoch [6/45], Loss: 0.61, ADE: 115.680, FDE: 114.57
+Epoch [7/45], Loss: 0.50, ADE: 91.748, FDE: 91.17
+Epoch [8/45], Loss: 0.45, ADE: 79.390, FDE: 79.01
+Epoch [9/45], Loss: 0.41, ADE: 73.897, FDE: 73.97
+Starting testing phase
+ADE is : 63.762 grid (5.755 m) 
+ FDE is: 63.993 grid (5.776 m) 
+ Inference time: 764.450 ms
+During Training, Test ADE: 63.76, FDE: 63.99
+Epoch [10/45], Loss: 0.38, ADE: 69.457, FDE: 69.39
+Epoch [11/45], Loss: 0.35, ADE: 63.153, FDE: 62.95
+Epoch [12/45], Loss: 0.33, ADE: 56.686, FDE: 56.78
+Epoch [13/45], Loss: 0.32, ADE: 52.875, FDE: 53.07
+Epoch [14/45], Loss: 0.31, ADE: 51.759, FDE: 51.97
+Starting testing phase
+ADE is : 42.906 grid (3.872 m) 
+ FDE is: 42.410 grid (3.828 m) 
+ Inference time: 768.020 ms
+During Training, Test ADE: 42.91, FDE: 42.41
+Epoch [15/45], Loss: 0.31, ADE: 50.722, FDE: 50.95
+Epoch [16/45], Loss: 0.31, ADE: 49.692, FDE: 49.84
+Epoch [17/45], Loss: 0.30, ADE: 48.744, FDE: 48.93
+Epoch [18/45], Loss: 0.30, ADE: 47.809, FDE: 48.03
+Epoch [19/45], Loss: 0.30, ADE: 46.821, FDE: 46.96
+Starting testing phase
+ADE is : 37.493 grid (3.384 m) 
+ FDE is: 37.336 grid (3.370 m) 
+ Inference time: 771.209 ms
+During Training, Test ADE: 37.49, FDE: 37.34
+Epoch [20/45], Loss: 0.29, ADE: 45.908, FDE: 46.14
+Epoch [21/45], Loss: 0.29, ADE: 44.944, FDE: 45.19
+Epoch [22/45], Loss: 0.29, ADE: 44.017, FDE: 44.27
+Epoch [23/45], Loss: 0.29, ADE: 43.079, FDE: 43.45
+Epoch [24/45], Loss: 0.28, ADE: 42.165, FDE: 42.55
+Starting testing phase
+ADE is : 32.908 grid (2.970 m) 
+ FDE is: 33.340 grid (3.009 m) 
+ Inference time: 800.829 ms
+During Training, Test ADE: 32.91, FDE: 33.34
+Epoch [25/45], Loss: 0.28, ADE: 41.676, FDE: 41.90
+Epoch [26/45], Loss: 0.28, ADE: 41.414, FDE: 41.70
+Epoch [27/45], Loss: 0.28, ADE: 41.291, FDE: 41.62
+Epoch [28/45], Loss: 0.28, ADE: 41.101, FDE: 41.41
+Epoch [29/45], Loss: 0.28, ADE: 40.907, FDE: 41.31
+Starting testing phase
+ADE is : 32.161 grid (2.903 m) 
+ FDE is: 32.806 grid (2.961 m) 
+ Inference time: 791.695 ms
+During Training, Test ADE: 32.16, FDE: 32.81
+Epoch [30/45], Loss: 0.28, ADE: 40.690, FDE: 41.04
+Epoch [31/45], Loss: 0.28, ADE: 40.532, FDE: 40.91
+Epoch [32/45], Loss: 0.28, ADE: 40.389, FDE: 40.76
+Epoch [33/45], Loss: 0.28, ADE: 40.145, FDE: 40.60
+Epoch [34/45], Loss: 0.27, ADE: 39.995, FDE: 40.37
+Starting testing phase
+ADE is : 31.276 grid (2.823 m) 
+ FDE is: 31.884 grid (2.878 m) 
+ Inference time: 779.435 ms
+During Training, Test ADE: 31.28, FDE: 31.88
+Epoch [35/45], Loss: 0.27, ADE: 39.782, FDE: 40.14
+Epoch [36/45], Loss: 0.27, ADE: 39.572, FDE: 40.04
+Epoch [37/45], Loss: 0.27, ADE: 39.455, FDE: 39.84
+Epoch [38/45], Loss: 0.27, ADE: 39.419, FDE: 39.85
+Epoch [39/45], Loss: 0.27, ADE: 39.383, FDE: 39.81
+Starting testing phase
+ADE is : 30.843 grid (2.784 m) 
+ FDE is: 31.692 grid (2.860 m) 
+ Inference time: 770.731 ms
+During Training, Test ADE: 30.84, FDE: 31.69
+Epoch [40/45], Loss: 0.27, ADE: 39.346, FDE: 39.85
+Epoch [41/45], Loss: 0.27, ADE: 39.290, FDE: 39.73
+Epoch [42/45], Loss: 0.27, ADE: 39.283, FDE: 39.74
+Epoch [43/45], Loss: 0.27, ADE: 39.237, FDE: 39.62
+Epoch [44/45], Loss: 0.27, ADE: 39.179, FDE: 39.62
+Starting testing phase
+ADE is : 30.652 grid (2.766 m) 
+ FDE is: 31.556 grid (2.848 m) 
+ Inference time: 773.543 ms
+During Training, Test ADE: 30.65, FDE: 31.56
+Epoch [45/45], Loss: 0.27, ADE: 39.156, FDE: 39.60
+Saving result of Learning rate: 0.001, Hidden size: 128, Batch size: 128
+Best checkpoint saved to /home/ky1/sjkx/HDAAGT_J/Pickled/best_trained_model_11-02-09-39.pth
+Training finished for 11-02-09-39!
+Starting testing phase
+ADE is : 30.612 grid (2.763 m) 
+ FDE is: 31.504 grid (2.843 m) 
+ Inference time: 799.648 ms
+Average Displacement Error: 30.612 grid (2.763 m), Final Displacement Error: 31.504 grid (2.843 m)

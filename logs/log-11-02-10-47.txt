@@ -1,0 +1,70 @@
+
+Total  # of GPUs 4
+Using cuda:3 device
+ Model description: No fisheye parameters + Temperature + 4s length
+Using affine SinD grid-to-meter mapping
+Loaded metric coordinate metadata from /home/ky1/sjkx/data/Fisheye-sinD_noheader.meta.json
+model_name = HDAAGT
+description = No fisheye parameters + Temperature + 4s length
+verbal = True
+detection_path = /home/ky1/sjkx/data/Fisheye-sinD_noheader.csv
+Zoneconf_path = configs/ZoneConf.yaml
+generate_data = False
+Load_Model = True
+Load_Model_Path = Pickled/best_trained_model_11-02-09-39.pth
+Train = False
+Test = True
+Test_during_training = False
+hidden_size = 128
+num_heads = 4
+Nusers = 64
+Nnodes = 64
+Num_linear_inputs = 17
+concat = False
+dropout = 0.2
+output_dict_size = 1024
+Headers = ['Frame', 'ID', 'BBx', 'BBy', 'W', 'L', 'Cls', 'Tr1', 'Tr2', 'Tr3', 'Tr4', 'Zone', 'Xreal', 'Yreal']
+Columns_to_keep = [2, 3, 11, 7, 8, 9, 10]
+trf_embedding_dict_size = [12, 9, 9, 9, 9]
+trf_embedding_dim = [64, 48, 48, 48, 48]
+pos_embedding_dict_size = [1024, 1024]
+pos_embedding_dim = [128, 128]
+xy_indx = [0, 1]
+Traffic_indx = [2, 3, 4, 5, 6]
+Linear_indx = [9]
+sos = [1008, 1008, 10, 7, 7, 7, 7]
+eos = [1016, 1016, 11, 8, 8, 8, 8]
+NZones = 10
+NTrfL = 4
+sl = 20
+future = 20
+sw = 4
+sn = 10
+Centre = [512, 512]
+dwn_smple = 2
+noise_multiply = 5
+noise_amp = 3
+noise_ratio = 0.5
+learning_rate = 0.001
+schd_stepzise = 12
+gamma = 0.2
+epochs = 45
+patience_limit = 5
+clip = 0.25
+batch_size = 128
+device = cuda:3
+seed = 42
+NFeatures = 7
+input_size = 24
+output_size = 2
+ct = 11-02-10-47
+metric_coord_bounds = {'grid_size': 1024, 'x_grid_to_m': [0.0902376187008333, -28.6449665834991], 'y_grid_to_m': [0.0902601551943476, -26.6013514745092]}
+Starting at:  10-47-08
+Loading data ...
+Train size: 7740, Test size: 150, Validation size: 0
+Loading model from the checkpoint
+Starting testing phase
+ADE is : 30.612 grid (2.763 m) 
+ FDE is: 31.504 grid (2.843 m) 
+ Inference time: 4770.133 ms
+Average Displacement Error: 30.612 grid (2.763 m), Final Displacement Error: 31.504 grid (2.843 m)
