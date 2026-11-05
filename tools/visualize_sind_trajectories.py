@@ -35,6 +35,10 @@ def parse_args() -> argparse.Namespace:
                         help="Zero-based index within the selected Pickled split.")
     parser.add_argument("--agents", default=None,
                         help="Optional comma-separated node indices, e.g. 0,3,7.")
+    parser.add_argument("--focus-agent", type=int, default=None,
+                        help="Plot only one node and print its exact endpoint errors.")
+    parser.add_argument("--selection", choices=("moving", "node"), default="moving",
+                        help="Automatic agent selection: moving agents (default) or lowest node indices.")
     parser.add_argument("--max-agents", type=int, default=8,
                         help="Maximum valid agents to draw when --agents is omitted.")
     parser.add_argument("--metadata", default=None,
@@ -167,12 +171,30 @@ def main() -> None:
         logits = model(model_scene, scene_mask, model_adj)[:, 1:-1]
         pred_grid = decode_top5(logits)[0].cpu().numpy()  # [future, nodes, xy]
 
+    print(
+        f"Sample fingerprint: Scene sum={float(sample_scene.sum()):.3f}, "
+        f"Target sum={float(sample_target.sum()):.3f}, "
+        f"Adj sum={float(sample_adj.sum()):.3f}"
+    )
+    if args.sample_index > 0:
+        previous_scene = scene_all[args.sample_index - 1]
+        previous_target = target_all[args.sample_index - 1]
+        print(
+            f"Difference from sample {args.sample_index - 1}: "
+            f"Scene max={float((scene_all[args.sample_index] - previous_scene).abs().max()):.3f}, "
+            f"Target max={float((target_all[args.sample_index] - previous_target).abs().max()):.3f}"
+        )
+
     hist_grid = sample_scene[0, :, :, :2].cpu().numpy()  # [history, nodes, xy]
     gt_grid = sample_target[0, :, :, :2].cpu().numpy()  # [future, nodes, xy]
     valid_hist = hist_grid[..., 0] != 0
     valid_future = gt_grid[..., 0] != 0
 
-    if args.agents:
+    if args.focus_agent is not None:
+        if args.focus_agent < 0 or args.focus_agent >= config["Nnodes"]:
+            raise SystemExit(f"focus-agent must be in [0,{config['Nnodes'] - 1}]")
+        agent_indices = [args.focus_agent]
+    elif args.agents:
         agent_indices = [int(value.strip()) for value in args.agents.split(",") if value.strip()]
         invalid = [idx for idx in agent_indices if idx < 0 or idx >= config["Nnodes"]]
         if invalid:
@@ -181,6 +203,15 @@ def main() -> None:
     else:
         candidates = [idx for idx in range(config["Nnodes"])
                      if valid_hist[:, idx].any() and valid_future[:, idx].any()]
+        if args.selection == "moving":
+            def movement_score(idx):
+                valid = valid_future[:, idx]
+                positions = gt_grid[valid, idx]
+                if len(positions) < 2:
+                    return 0.0
+                return float(np.linalg.norm(positions[-1] - positions[0]))
+
+            candidates.sort(key=movement_score, reverse=True)
         agent_indices = candidates[:max(0, args.max_agents)]
     if not agent_indices:
         raise SystemExit("This sample has no selected agent with both history and future ground truth.")
@@ -201,23 +232,39 @@ def main() -> None:
         pred = pred_grid[:, agent, :]
         h = np.where(valid_hist[:, agent, None], h, np.nan)
         gt = np.where(valid_future[:, agent, None], gt, np.nan)
-        pred = np.where(valid_future[:, agent, None], pred, np.nan)
+        # Predictions exist for the whole future horizon. Keep them visible
+        # even when the ground-truth track has missed frames.
         h = to_plot(h, metadata)
         gt = to_plot(gt, metadata)
         pred = to_plot(pred, metadata)
 
         ax.plot(h[:, 0], h[:, 1], color=color, linewidth=1.6, alpha=0.75)
-        ax.plot(gt[:, 0], gt[:, 1], color=color, linewidth=2.0)
-        ax.plot(pred[:, 0], pred[:, 1], color=color, linewidth=2.0, linestyle="--")
+        ax.plot(gt[:, 0], gt[:, 1], color=color, linewidth=2.0,
+                marker=".", markersize=4)
+        ax.plot(pred[:, 0], pred[:, 1], color=color, linewidth=2.0,
+                linestyle="--", marker=".", markersize=4)
         h_ok = np.isfinite(h).all(axis=1)
         gt_ok = np.isfinite(gt).all(axis=1)
         if h_ok.any():
             ax.scatter(h[h_ok, 0][-1], h[h_ok, 1][-1], color=color, marker="o", s=24, zorder=4)
             ax.annotate(f"N{agent}", (h[h_ok, 0][-1], h[h_ok, 1][-1]), xytext=(3, 3),
                         textcoords="offset points", fontsize=8, color=color)
-        if valid_future[-1, agent]:
-            ax.scatter(gt[-1, 0], gt[-1, 1], color=color, marker="x", s=42, zorder=5)
-            ax.scatter(pred[-1, 0], pred[-1, 1], color=color, marker="*", s=58, zorder=5)
+        if gt_ok.any():
+            last_gt_idx = np.flatnonzero(gt_ok)[-1]
+            ax.scatter(gt[last_gt_idx, 0], gt[last_gt_idx, 1], color=color,
+                       marker="x", s=42, zorder=5)
+        ax.scatter(pred[-1, 0], pred[-1, 1], color=color, marker="*", s=58, zorder=5)
+
+        print(
+            f"node {agent}: history points={int(valid_hist[:, agent].sum())}, "
+            f"valid GT future points={int(valid_future[:, agent].sum())}, "
+            f"predicted future points={len(pred_grid)}, "
+            f"history_last_grid={hist_grid[-1, agent].round(2).tolist()}, "
+            f"gt_first_grid={gt_grid[0, agent].round(2).tolist()}, "
+            f"pred_first_grid={pred_grid[0, agent].round(2).tolist()}, "
+            f"gt_last_grid={gt_grid[-1, agent].round(2).tolist()}, "
+            f"pred_last_grid={pred_grid[-1, agent].round(2).tolist()}"
+        )
 
         valid = valid_future[:, agent]
         if valid.any():
@@ -230,13 +277,26 @@ def main() -> None:
                 shown_fde_sum += fde_grid
                 shown_fde_count += 1
 
+            if metadata:
+                pred_agent_m = to_plot(pred_grid[:, agent], metadata)
+                gt_agent_m = to_plot(gt_grid[:, agent], metadata)
+                dist_m = np.linalg.norm(pred_agent_m[valid] - gt_agent_m[valid], axis=-1)
+                final_text = "not evaluated (GT missing at final horizon)"
+                if valid_future[-1, agent]:
+                    final_text = f"{np.linalg.norm(pred_agent_m[-1] - gt_agent_m[-1]):.3f} m"
+                print(
+                    f"node {agent}: per-agent ADE={dist_m.mean():.3f} m, "
+                    f"FDE={final_text}, "
+                    f"max point error={dist_m.max():.3f} m"
+                )
+
     legend_items = [
         Line2D([0], [0], color="0.25", linewidth=1.6, label="History"),
         Line2D([0], [0], color="0.25", linewidth=2, label="Ground truth future"),
         Line2D([0], [0], color="0.25", linewidth=2, linestyle="--", label="Predicted future"),
         Line2D([0], [0], color="0.25", marker="o", linestyle="None", label="Observed endpoint"),
-        Line2D([0], [0], color="0.25", marker="x", linestyle="None", label="True endpoint"),
-        Line2D([0], [0], color="0.25", marker="*", linestyle="None", label="Predicted endpoint"),
+        Line2D([0], [0], color="0.25", marker="x", linestyle="None", label="Last valid GT point"),
+        Line2D([0], [0], color="0.25", marker="*", linestyle="None", label="Prediction horizon endpoint"),
     ]
     ax.legend(handles=legend_items, loc="best", fontsize=8)
     sample_ade_grid = shown_ade_sum / max(1, shown_ade_count)
@@ -277,6 +337,7 @@ def main() -> None:
     fig.savefig(output, dpi=180)
     plt.close(fig)
     print(f"Split samples: {count}; selected sample: {args.sample_index}")
+    print(f"Agent selection: {'explicit --agents' if args.agents else args.selection}")
     print(f"Plotted node indices: {agent_indices}")
     print(f"Displayed-agent ADE/FDE: {subtitle}")
     print(f"Saved figure: {output}")

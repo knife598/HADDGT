@@ -1,0 +1,166 @@
+
+Total  # of GPUs 4
+Using cuda:3 device
+ Model description: No fisheye parameters + Temperature + 4s length
+Using affine SinD grid-to-meter mapping
+Loaded metric coordinate metadata from /home/ky1/sjkx/data/Fisheye-sinD_noheader.meta.json
+model_name = HDAAGT
+description = No fisheye parameters + Temperature + 4s length
+verbal = True
+detection_path = /home/ky1/sjkx/data/Fisheye-sinD_noheader.csv
+Zoneconf_path = configs/ZoneConf.yaml
+generate_data = True
+Load_Model = False
+Load_Model_Path = Pickled/best_trained_model05-22-09-03.pth
+Train = True
+Test = True
+Test_during_training = True
+hidden_size = 128
+num_heads = 4
+Nusers = 64
+Nnodes = 64
+Num_linear_inputs = 17
+concat = False
+dropout = 0.2
+output_dict_size = 1024
+Headers = ['Frame', 'ID', 'BBx', 'BBy', 'W', 'L', 'Cls', 'Tr1', 'Tr2', 'Tr3', 'Tr4', 'Zone', 'Xreal', 'Yreal']
+Columns_to_keep = [2, 3, 11, 7, 8, 9, 10]
+trf_embedding_dict_size = [12, 9, 9, 9, 9]
+trf_embedding_dim = [64, 48, 48, 48, 48]
+pos_embedding_dict_size = [1024, 1024]
+pos_embedding_dim = [128, 128]
+xy_indx = [0, 1]
+Traffic_indx = [2, 3, 4, 5, 6]
+Linear_indx = [9]
+sos = [1008, 1008, 10, 7, 7, 7, 7]
+eos = [1016, 1016, 11, 8, 8, 8, 8]
+NZones = 10
+NTrfL = 4
+sl = 20
+future = 20
+sw = 4
+sn = 10
+Centre = [512, 512]
+dwn_smple = 2
+noise_multiply = 5
+noise_amp = 3
+noise_ratio = 0.5
+learning_rate = 0.001
+schd_stepzise = 12
+gamma = 0.2
+epochs = 45
+patience_limit = 5
+clip = 0.25
+batch_size = 128
+device = cuda:3
+seed = 42
+NFeatures = 7
+input_size = 24
+output_size = 2
+ct = 11-03-10-36
+metric_coord_bounds = {'grid_size': 1024, 'min_x': -28.6449665834991, 'max_x': 63.66811734745336, 'min_y': -26.6013514745092, 'max_y': 65.7347872893084, 'x_grid_to_m': [0.0902376187008333, -28.6449665834991], 'y_grid_to_m': [0.0902601551943476, -26.6013514745092]}
+Starting at:  10-36-14
+Loading CSV file ...
+Train size: 129, Test size: 14, Validation size: 1 
+Randomly splitting the data
+Train size: 7740, Test size: 150, Validation size: 0
+Creating model from scratch
+The number of learnable parameter is 3949342 !
+Epoch [1/45], Loss: 5.99, ADE: 273.234, FDE: 270.13
+Epoch [2/45], Loss: 3.98, ADE: 320.715, FDE: 320.52
+Epoch [3/45], Loss: 2.34, ADE: 304.824, FDE: 305.75
+Epoch [4/45], Loss: 1.38, ADE: 249.403, FDE: 252.10
+Starting testing phase
+ADE is : 184.564 grid (16.657 m) 
+ FDE is: 184.713 grid (16.671 m) 
+ Inference time: 779.011 ms
+During Training, Test ADE: 184.56, FDE: 184.71
+Epoch [5/45], Loss: 0.82, ADE: 161.847, FDE: 165.03
+Epoch [6/45], Loss: 0.58, ADE: 112.009, FDE: 114.15
+Epoch [7/45], Loss: 0.49, ADE: 90.862, FDE: 92.28
+Epoch [8/45], Loss: 0.44, ADE: 77.419, FDE: 77.61
+Epoch [9/45], Loss: 0.40, ADE: 69.444, FDE: 69.81
+Starting testing phase
+ADE is : 57.860 grid (5.222 m) 
+ FDE is: 58.399 grid (5.271 m) 
+ Inference time: 773.598 ms
+During Training, Test ADE: 57.86, FDE: 58.40
+Epoch [10/45], Loss: 0.37, ADE: 62.519, FDE: 62.64
+Epoch [11/45], Loss: 0.34, ADE: 55.477, FDE: 55.42
+Epoch [12/45], Loss: 0.32, ADE: 48.665, FDE: 48.63
+Epoch [13/45], Loss: 0.31, ADE: 45.472, FDE: 45.54
+Epoch [14/45], Loss: 0.30, ADE: 44.465, FDE: 44.51
+Starting testing phase
+ADE is : 37.512 grid (3.385 m) 
+ FDE is: 35.488 grid (3.203 m) 
+ Inference time: 773.407 ms
+During Training, Test ADE: 37.51, FDE: 35.49
+Epoch [15/45], Loss: 0.30, ADE: 43.609, FDE: 43.65
+Epoch [16/45], Loss: 0.30, ADE: 42.832, FDE: 42.92
+Epoch [17/45], Loss: 0.29, ADE: 42.035, FDE: 42.15
+Epoch [18/45], Loss: 0.29, ADE: 41.303, FDE: 41.42
+Epoch [19/45], Loss: 0.29, ADE: 40.503, FDE: 40.67
+Starting testing phase
+ADE is : 34.126 grid (3.080 m) 
+ FDE is: 32.344 grid (2.919 m) 
+ Inference time: 800.577 ms
+During Training, Test ADE: 34.13, FDE: 32.34
+Epoch [20/45], Loss: 0.28, ADE: 39.817, FDE: 39.96
+Epoch [21/45], Loss: 0.28, ADE: 39.079, FDE: 39.21
+Epoch [22/45], Loss: 0.28, ADE: 38.320, FDE: 38.48
+Epoch [23/45], Loss: 0.28, ADE: 37.540, FDE: 37.74
+Epoch [24/45], Loss: 0.27, ADE: 36.845, FDE: 37.07
+Starting testing phase
+ADE is : 30.894 grid (2.788 m) 
+ FDE is: 29.512 grid (2.663 m) 
+ Inference time: 782.855 ms
+During Training, Test ADE: 30.89, FDE: 29.51
+Epoch [25/45], Loss: 0.27, ADE: 36.321, FDE: 36.60
+Epoch [26/45], Loss: 0.27, ADE: 36.161, FDE: 36.31
+Epoch [27/45], Loss: 0.27, ADE: 36.036, FDE: 36.29
+Epoch [28/45], Loss: 0.27, ADE: 35.887, FDE: 36.04
+Epoch [29/45], Loss: 0.27, ADE: 35.759, FDE: 35.95
+Starting testing phase
+ADE is : 30.394 grid (2.743 m) 
+ FDE is: 28.854 grid (2.604 m) 
+ Inference time: 836.847 ms
+During Training, Test ADE: 30.39, FDE: 28.85
+Epoch [30/45], Loss: 0.27, ADE: 35.623, FDE: 35.85
+Epoch [31/45], Loss: 0.27, ADE: 35.409, FDE: 35.60
+Epoch [32/45], Loss: 0.27, ADE: 35.318, FDE: 35.56
+Epoch [33/45], Loss: 0.27, ADE: 35.138, FDE: 35.33
+Epoch [34/45], Loss: 0.27, ADE: 34.987, FDE: 35.27
+Starting testing phase
+ADE is : 29.835 grid (2.693 m) 
+ FDE is: 28.381 grid (2.561 m) 
+ Inference time: 771.297 ms
+During Training, Test ADE: 29.84, FDE: 28.38
+Epoch [35/45], Loss: 0.27, ADE: 34.816, FDE: 35.00
+Epoch [36/45], Loss: 0.26, ADE: 34.653, FDE: 34.85
+Epoch [37/45], Loss: 0.26, ADE: 34.550, FDE: 34.66
+Epoch [38/45], Loss: 0.26, ADE: 34.505, FDE: 34.60
+Epoch [39/45], Loss: 0.26, ADE: 34.495, FDE: 34.75
+Starting testing phase
+ADE is : 29.376 grid (2.651 m) 
+ FDE is: 27.971 grid (2.524 m) 
+ Inference time: 799.369 ms
+During Training, Test ADE: 29.38, FDE: 27.97
+Epoch [40/45], Loss: 0.26, ADE: 34.408, FDE: 34.59
+Epoch [41/45], Loss: 0.26, ADE: 34.442, FDE: 34.68
+Epoch [42/45], Loss: 0.26, ADE: 34.398, FDE: 34.66
+Epoch [43/45], Loss: 0.26, ADE: 34.370, FDE: 34.56
+Epoch [44/45], Loss: 0.26, ADE: 34.309, FDE: 34.55
+Starting testing phase
+ADE is : 29.230 grid (2.638 m) 
+ FDE is: 27.862 grid (2.515 m) 
+ Inference time: 776.294 ms
+During Training, Test ADE: 29.23, FDE: 27.86
+Epoch [45/45], Loss: 0.26, ADE: 34.239, FDE: 34.49
+Saving result of Learning rate: 0.001, Hidden size: 128, Batch size: 128
+Best checkpoint saved to /home/ky1/sjkx/HDAAGT_J/Pickled/best_trained_model_11-03-10-36.pth
+Training finished for 11-03-10-36!
+Starting testing phase
+ADE is : 29.194 grid (2.635 m) 
+ FDE is: 27.860 grid (2.514 m) 
+ Inference time: 769.440 ms
+Average Displacement Error: 29.194 grid (2.635 m), Final Displacement Error: 27.860 grid (2.514 m)

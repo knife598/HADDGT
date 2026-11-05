@@ -6,7 +6,7 @@ description: "No fisheye parameters + Temperature + 4s length"
 verbal: true # If true, it will print the configs parameters
 detection_path: '/home/ky1/sjkx/data/Fisheye-sinD_noheader.csv'
 Zoneconf_path: 'configs/ZoneConf.yaml'
-generate_data: true #  Add class by loading the CSV file
+generate_data: false #  Add class by loading the CSV file
 Load_Model: false # It's for creating model from scratch
 Load_Model_Path: 'Pickled/best_trained_model05-22-09-03.pth' # The path of the model to be loaded
 Train: true # It's for training the model with the prepared data

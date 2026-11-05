@@ -3,6 +3,7 @@ Processed/
 sinD/
 misc/
 Other/
+outputs/
 # Add new files to the .gitignore file on main
 *.pt
 *.pth
