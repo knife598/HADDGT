@@ -1,0 +1,60 @@
+# First-round SinD vehicle-only preprocessing.
+# Generate the CSV with tools/convert_sind_to_hdaagt.py before running this file.
+model_name: "HDAAGT"
+description: "SinD vehicle-only | independent masks | metric evaluation"
+verbal: true
+detection_path: 'data/SinD/Changchun_507_009_masked.csv'
+Zoneconf_path: 'configs/ZoneConf.yaml'
+generate_data: true
+Load_Model: false
+Load_Model_Path: 'Pickled/best_trained_model.pth'
+Train: true
+Test: true
+Test_during_training: true
+
+hidden_size: 128
+num_heads: 4
+Nusers: 64
+Nnodes: 64
+Num_linear_inputs: 1
+concat: false
+dropout: 0.2
+output_dict_size: 1024
+
+# Converter output columns. The first 7 selected values remain compatible with HDAAGT.
+Headers: ['Frame','ID','BBx','BBy','W','L','Cls','Tr1','Tr2','Tr3','Tr4','Zone','Xreal','Yreal','ZoneMask','Tr1Mask','Tr2Mask','Tr3Mask','Tr4Mask']
+Columns_to_keep: [2,3,11,7,8,9,10]
+mask_columns_to_keep: [14,15,16,17,18]
+mask_aware_inputs: true
+agent_valid_index: 7
+traffic_mask_indices: [8,9,10,11,12]
+trf_embedding_dict_size: [12,9,9,9,9]
+trf_embedding_dim: [48,40,40,40,40]
+pos_embedding_dict_size: [1024,1024]
+pos_embedding_dim: [128,128]
+xy_indx: [0,1]
+Traffic_indx: [2,3,4,5,6]
+Linear_indx: [15]
+sos: [1008,1008,10,7,7,7,7]
+eos: [1016,1016,11,8,8,8,8]
+NZones: 10
+NTrfL: 4
+sl: 20
+future: 20
+sw: 4
+sn: 10
+Centre: [512,512]
+dwn_smple: 2
+noise_multiply: 5
+noise_amp: 3
+noise_ratio: 0.5
+
+learning_rate: !!float 8e-4
+schd_stepzise: 12
+gamma: 0.2
+epochs: 45
+patience_limit: 5
+clip: 0.25
+batch_size: 128
+device: 'cuda:0'
+seed: 42

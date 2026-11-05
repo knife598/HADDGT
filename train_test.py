@@ -6,7 +6,7 @@ from utilz.utils import *
 from models.modules import *
 
 
-def metric_errors_from_grid(Pred_xy, Target_xy, config):
+def metric_errors_from_grid(Pred_xy, Target_xy, config, valid_mask=None):
     bounds = config.get('metric_coord_bounds')
     if not bounds:
         return None, None
@@ -33,7 +33,7 @@ def metric_errors_from_grid(Pred_xy, Target_xy, config):
         target_m[..., 0] = Target_xy[..., 0] / grid_max * (max_x - min_x) + min_x
         target_m[..., 1] = Target_xy[..., 1] / grid_max * (max_y - min_y) + min_y
 
-    valid = Target_xy[..., 0] != 0
+    valid = (Target_xy[..., 0] != 0) if valid_mask is None else valid_mask.bool()
     dist = torch.sqrt(torch.pow(pred_m - target_m, 2).sum(-1))
     ADE_m = dist[valid].mean() if valid.any() else dist.new_zeros(())
     final_valid = valid[:, -1]
@@ -56,14 +56,32 @@ def train_model(model, optimizer, criterion, scheduler, train_loader, test_loade
         epoch_losses, epoch_ADE, epoch_FDE = [], [], []
         for Scene, Target, Adj_Mat_Scene in train_loader: # Scene & Taget => [B, SL0, Nnodes, Features], Adj_Mat_Scene => [B, SL, Nnodes, Nnodes]
             optimizer.zero_grad()
+            target_valid = (
+                Target[..., config['agent_valid_index']] > 0.5
+                if config.get('mask_aware_inputs', False) else None
+            )
             Scene, Scene_mask, Adj_Mat, Target = prep_model_input(Scene, Adj_Mat_Scene,Target, sos, eos, config)
             outputs = model(Scene, Scene_mask, Adj_Mat)
-            loss = criterion(outputs.reshape(-1, 1024), Target.reshape(-1).long())
+            if target_valid is None:
+                loss = criterion(outputs.reshape(-1, 1024), Target.reshape(-1).long())
+            else:
+                logits = outputs[:, 1:-1]
+                labels = Target[:, 1:-1]
+                point_loss = nn.functional.cross_entropy(
+                    logits.reshape(-1, logits.size(-1)),
+                    labels.reshape(-1).long(),
+                    reduction='none',
+                ).reshape_as(labels)
+                point_mask = target_valid.unsqueeze(-1).expand_as(labels)
+                loss = (point_loss * point_mask).sum() / point_mask.sum().clamp_min(1)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), config['clip'])
             optimizer.step()
             with torch.no_grad():
-                _, ADE, FDE = Find_topk_selected_words(outputs[:,1:-1], Target[:,1:-1]) # sos and eos are not included in the loss
+                _, ADE, FDE = Find_topk_selected_words(
+                    outputs[:,1:-1], Target[:,1:-1],
+                    None if target_valid is None else target_valid,
+                )
             epoch_losses.append(loss.item())
             epoch_ADE.append(ADE)
             epoch_FDE.append(FDE)
@@ -113,12 +131,16 @@ def test_model(model, test_loader, config):
         end_event = torch.cuda.Event(enable_timing=True)
         start_event.record()
         for Scene, Target, Adj_Mat_Scene in test_loader:
+            target_valid = (
+                Target[..., config['agent_valid_index']] > 0.5
+                if config.get('mask_aware_inputs', False) else None
+            )
             Scene, Scene_mask, Adj_Mat, Target = prep_model_input(Scene, Adj_Mat_Scene,Target, sos, eos, config)
             Pred_target = model(Scene, Scene_mask,Adj_Mat)
             Target = Target[:,1:-1,:, config['xy_indx']]
-            Topk_Selected_words, ADE, FDE = Find_topk_selected_words(Pred_target[:,1:-1], Target)
-            ADE_m, FDE_m = metric_errors_from_grid(Topk_Selected_words, Target, config)
-            valid = Target[..., 0] != 0
+            Topk_Selected_words, ADE, FDE = Find_topk_selected_words(Pred_target[:,1:-1], Target, target_valid)
+            ADE_m, FDE_m = metric_errors_from_grid(Topk_Selected_words, Target, config, target_valid)
+            valid = (Target[..., 0] != 0) if target_valid is None else target_valid
             final_valid = valid[:, -1]
             pred_dist = torch.sqrt(((Topk_Selected_words - Target) ** 2).sum(-1))
             test_size += Scene.size(0)
@@ -155,8 +177,12 @@ def test_model(model, test_loader, config):
 
 def prep_model_input(Scene, Adj_Mat_Scene,Target, sos, eos, config):
     Scene = attach_sos_eos(Scene, sos, eos)
+    if config.get('mask_aware_inputs', False):
+        node_present = Scene[:, 1:-1, :, config['agent_valid_index']].amax(dim=1)
+        Scene[:, 0, :, config['agent_valid_index']] = node_present
+        Scene[:, -1, :, config['agent_valid_index']] = node_present
     Adj_Mat = torch.cat((torch.ones_like(Adj_Mat_Scene[:,:1]), Adj_Mat_Scene, torch.ones_like(Adj_Mat_Scene[:,:1])), dim=1)
-    Scene_mask = create_src_mask(Scene)
+    Scene_mask = create_src_mask(Scene, config.get('agent_valid_index'))
     Target = attach_sos_eos(Target[:,:,:, config['xy_indx']], sos[:, config['xy_indx']], eos[:,config['xy_indx']])
     return Scene, Scene_mask, Adj_Mat, Target
 if __name__ == "__main__":

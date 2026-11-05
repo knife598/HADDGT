@@ -24,6 +24,9 @@ class Scenes(Dataset):
         self.xyidx = config['xy_indx']
         self.Centre = config['Centre']
         self.dwn_smple = config['dwn_smple']
+        self.mask_aware_inputs = bool(config.get('mask_aware_inputs', False))
+        self.agent_valid_index = config.get('agent_valid_index')
+        self.traffic_mask_indices = config.get('traffic_mask_indices', [])
         self.eyemat = torch.eye(self.Nnodes, self.Nnodes, device=self.device)
         self.epsilon = -1e-16
         self.ID = [] # We keep the track of the object IDs
@@ -50,7 +53,10 @@ class Scenes(Dataset):
             final_indx = j + self.sl + self.future
             start_indx = j + self.sl
             scene = fullscene[j : j+ self.sl: self.dwn_smple]
-            no_show_frames = (scene[:,:,self.xyidx[0]] == 0).sum(dim=0) # The number of zeros in the x direction, which means they are out of camera sight
+            if self.mask_aware_inputs:
+                no_show_frames = (scene[:,:,self.agent_valid_index] <= 0.5).sum(dim=0)
+            else:
+                no_show_frames = (scene[:,:,self.xyidx[0]] == 0).sum(dim=0) # Legacy coordinate-based absence test
             no_show_frames = (no_show_frames < self.sl//2//self.dwn_smple).view(1, self.Nnodes, 1) # At least the vehicle must be half of the sequence, unless we ignore the scene
             target = fullscene[start_indx : final_indx:self.dwn_smple] * no_show_frames
             scene = scene* no_show_frames
@@ -92,6 +98,14 @@ class Scenes(Dataset):
             noise = torch.randint(0, mx, ss, device=self.device)
             rand = torch.rand(ss, device=self.device) > ratio
             noisy_scene = init_scene + noise * rand * mask
+            if self.mask_aware_inputs:
+                for coordinate_index in self.xyidx:
+                    valid_positions = init_scene[..., self.agent_valid_index] > 0.5
+                    noisy_scene[..., coordinate_index] = torch.where(
+                        valid_positions,
+                        noisy_scene[..., coordinate_index].clamp(1, 1023),
+                        torch.zeros_like(noisy_scene[..., coordinate_index]),
+                    )
             noise = torch.randint(0, mx, ts, device=self.device)
             rand = torch.rand(ts, device=self.device) > ratio
             noisy_tar = init_Target + noise * rand * trmask
@@ -105,7 +119,12 @@ class Scenes(Dataset):
         x,y = fullscene[:, :, self.xyidx[0]].unsqueeze(2), fullscene[:, :, self.xyidx[1]].unsqueeze(2)
         dx = torch.diff(x, n=1, append=x[-1:,:], dim = 0)
         dy = torch.diff(y, n=1, append=y[-1:,:], dim = 0)
-        flg = y!=0 # In most cases, all Nodes are not filled with agents, so we must ignore them
+        if self.mask_aware_inputs:
+            flg = fullscene[:, :, self.agent_valid_index].unsqueeze(2) > 0.5
+            dx = dx * flg
+            dy = dy * flg
+        else:
+            flg = y!=0 # Legacy Fisheye/MARC presence convention
         xc = ((x - self.Centre[0])/self.Centre[0])*flg
         yc = ((y - self.Centre[1])/self.Centre[1])*flg
         xc2 = xc**2
@@ -198,22 +217,40 @@ def Scene_Process(Scenetr, Scenetst, Sceneval, Traffic_data, config):
         indices = torch.randperm(scenelets) # To avoid data leakage, seed selects between the scenelet_len frames, so sliding window does not affect it
         
 
-    Traffic_data = torch.tensor(Traffic_data.values, dtype=torch.float, device=device)
-    DFindx, DFindxtmp = 0, 0 # We sweep through the first frame to the last frame
+    frame_values = Traffic_data['Frame'].astype(int)
+    frame_to_rows = {int(frame): frame_df for frame, frame_df in Traffic_data.groupby('Frame', sort=True)}
+    min_frame, max_frame = int(frame_values.min()), int(frame_values.max())
     IDs = []
     Zones = []
     Fr = []
     Scene = []
-    for fr in range(int(min(Traffic_data[:,0])), int(max(Traffic_data[:,0]))):
-        DFindxtmp = DFindx
-        rows = torch.empty(0, NFeatures, device=device) # Nnodes and NFeatures are predefined fixed values
-        while Traffic_data[DFindx,0] == fr:
-            DFindx += 1
-
-        rows = Traffic_data[DFindxtmp:DFindx, Columns_to_keep] # We only keep the columns that we need
+    mask_aware = bool(config.get('mask_aware_inputs', False))
+    mask_columns = config.get('mask_columns_to_keep', [])
+    base_features = len(Columns_to_keep)
+    if mask_aware and NFeatures != base_features + 1 + len(mask_columns):
+        raise ValueError(
+            f"Mask-aware NFeatures must equal selected features + agent mask + categorical masks: "
+            f"{base_features} + 1 + {len(mask_columns)} != {NFeatures}"
+        )
+    for fr in range(min_frame, max_frame + 1):
+        frame_df = frame_to_rows.get(fr)
+        if frame_df is None:
+            frame_df = Traffic_data.iloc[0:0]
+        feature_values = torch.tensor(frame_df.iloc[:, Columns_to_keep].to_numpy(), dtype=torch.float, device=device)
+        if mask_aware:
+            cat_masks = torch.tensor(frame_df.iloc[:, mask_columns].to_numpy(), dtype=torch.float, device=device)
+            agent_mask = torch.ones((len(frame_df), 1), dtype=torch.float, device=device)
+            rows = torch.cat((feature_values, agent_mask, cat_masks), dim=1)
+        else:
+            rows = feature_values
+        if rows.size(0) > Nusers:
+            raise ValueError(
+                f"Frame {fr} has {rows.size(0)} vehicles, exceeding configured Nusers={Nusers}. "
+                "Increase Nusers/Nnodes before preprocessing."
+            )
         Fr.append(fr)  # We keep the track of the frame number
-        IDs.append(Traffic_data[DFindxtmp:DFindx, 1])
-        Zones.append(Traffic_data[DFindxtmp:DFindx, 11])
+        IDs.append(torch.tensor(frame_df['ID'].to_numpy(), dtype=torch.float, device=device))
+        Zones.append(torch.tensor(frame_df['Zone'].to_numpy(), dtype=torch.float, device=device))
         while rows.size()[0] < Nusers:  # This is to make sure that rows is [Nnodes, NFeatures]
             rows = torch.cat((rows, torch.zeros(1, NFeatures, device=device)), dim=0)
 
@@ -328,11 +365,11 @@ def zonefinder(BB, Zones):
     return PredZone.reshape(B, Nnodes)
 
 
-def Find_topk_selected_words (Pred_target, Target):
+def Find_topk_selected_words (Pred_target, Target, valid_mask=None):
     Word_Probs = Pred_target.softmax(dim=-1)
     top_values, top_indices = torch.topk(Word_Probs, k = 5, dim=-1)
     Topk_Selected_words = (top_indices*top_values).sum(-1)/top_values.sum(-1)
-    valid = Target[..., 0] != 0 # padding nodes are excluded from the metric
+    valid = (Target[..., 0] != 0) if valid_mask is None else valid_mask.bool()
     dist = torch.sqrt(torch.pow(Topk_Selected_words - Target, 2).sum(-1))
     ADE = dist[valid].mean() if valid.any() else dist.new_zeros(())
     final_valid = valid[:, -1]

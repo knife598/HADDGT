@@ -159,9 +159,18 @@ def target_mask0(trgt, num_head, device="cuda:3"):
         mask = mask.repeat_interleave(num_head,dim=0)
     return mask == 0
 
-def create_src_mask(src): # src => [B, SL, Nnodes, Features]
-    mask = src[:,:,:, 1] == 0
-    return mask.permute(0,2,1).reshape(-1, src.size(1)) # out => [B* Nnodes, SL]
+def create_src_mask(src, agent_valid_index=None): # src => [B, SL, Nnodes, Features]
+    if agent_valid_index is None:
+        # Legacy Fisheye/MARC convention.
+        mask = src[:,:,:, 1] == 0
+    else:
+        mask = src[:,:,:, agent_valid_index] <= 0.5
+    mask = mask.permute(0,2,1).reshape(-1, src.size(1))
+    # MultiheadAttention returns NaNs when every timestep of a padded node is masked.
+    all_masked = mask.all(dim=1)
+    if all_masked.any():
+        mask[all_masked, 0] = False
+    return mask # out => [B* Nnodes, SL]
 
 def attach_sos_eos(src, sos, eos): # src => [B, SL0, Nnodes, Features]
     return torch.cat((sos.repeat(src.size(0),1,1,1), src, eos.repeat(src.size(0),1,1,1)), dim=1) # out => [B, SL0+2, Nnodes, Features]

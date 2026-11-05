@@ -70,7 +70,16 @@ if __name__ == '__main__':
     savelog(f' Model description: {config["description"]}', ct=ct)
 
     ZoneConf = Zoneconf(config['Zoneconf_path'])
-    config['NFeatures'] = len(config["Columns_to_keep"])
+    base_feature_count = len(config["Columns_to_keep"])
+    if config.get('mask_aware_inputs', False):
+        config['NFeatures'] = base_feature_count + 1 + len(config.get('mask_columns_to_keep', []))
+        config['agent_valid_index'] = base_feature_count
+        config['traffic_mask_indices'] = config.get(
+            'traffic_mask_indices',
+            list(range(base_feature_count + 1, config['NFeatures'])),
+        )
+    else:
+        config['NFeatures'] = base_feature_count
     config["input_size"] = config["NFeatures"] + 9 + 8
     config["output_size"] = len(config['xy_indx'])
     config['device'] = device
@@ -102,8 +111,11 @@ if __name__ == '__main__':
     if config['verbal']:
         for arg in config.items():
             savelog(f"{arg[0]} = {arg[1]}", ct)
-    config['sos'] = torch.cat((torch.tensor(config['sos']), torch.zeros(17)), dim=0).repeat(config['Nnodes'], 1).to(device)
-    config['eos'] = torch.cat((torch.tensor(config['eos']), torch.zeros(17)), dim=0).repeat(config['Nnodes'], 1).to(device)
+    extra_sos_eos = config['input_size'] - len(config['sos'])
+    if extra_sos_eos < 0:
+        raise ValueError("SOS/EOS feature vector is longer than the configured model input size")
+    config['sos'] = torch.cat((torch.tensor(config['sos']), torch.zeros(extra_sos_eos)), dim=0).repeat(config['Nnodes'], 1).to(device)
+    config['eos'] = torch.cat((torch.tensor(config['eos']), torch.zeros(extra_sos_eos)), dim=0).repeat(config['Nnodes'], 1).to(device)
     best_path = os.path.join(cwd, 'Pickled', f'best_trained_model_{ct}.pth')
     loss_path = os.path.join(cwd, 'Pickled', f'epoch_losses_{ct}.pt')
 

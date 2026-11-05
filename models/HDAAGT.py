@@ -53,10 +53,11 @@ class Positional_Encoding_Layer(nn.Module):
 
 
 class Traffic_Encoding_Layer(nn.Module):
-    def __init__(self, hidden_size, num_att_heads, Traffic_indx, trf_embedding_dim, trf_embedding_dict_size, Num_linear_inputs, Linear_indx, dropout = 0.2):
+    def __init__(self, hidden_size, num_att_heads, Traffic_indx, trf_embedding_dim, trf_embedding_dict_size, Num_linear_inputs, Linear_indx, traffic_mask_indices=None, dropout = 0.2):
         super().__init__()
         self.hidden_size = hidden_size
         self.Traffic_indx = Traffic_indx
+        self.traffic_mask_indices = traffic_mask_indices or []
         self.Linear_indx = Linear_indx
         self.Linear_Embedding_dim = 2*hidden_size - sum(trf_embedding_dim)
 
@@ -87,7 +88,11 @@ class Traffic_Encoding_Layer(nn.Module):
         # Embedding the Traffic features
         Traffic_embedding = []
         for n, indx in enumerate(self.Traffic_indx):
-            Traffic_embedding.append(self.Traffic_embeddings[n](Scene[:,:,:,indx].long()))
+            embedded = self.Traffic_embeddings[n](Scene[:,:,:,indx].long())
+            if n < len(self.traffic_mask_indices):
+                available = Scene[:,:,:,self.traffic_mask_indices[n]].unsqueeze(-1) > 0.5
+                embedded = embedded * available
+            Traffic_embedding.append(embedded)
         Trf_embd = torch.cat(Traffic_embedding, dim=-1)
         # Linear Embedding
         Lin_embd = self.LE_LN1(Scene[:,:,:,self.Linear_indx])
@@ -139,7 +144,8 @@ class Encoder_DAAG(nn.Module):
         self.Traffic_Encoding_Layer = Traffic_Encoding_Layer(hidden_size = self.hidden_size,
                                                              num_att_heads = num_heads, Traffic_indx = self.Traffic_indx, trf_embedding_dim = config['trf_embedding_dim'],
                                                              trf_embedding_dict_size = config['trf_embedding_dict_size'], Num_linear_inputs = len(self.Linear_indx),
-                                                             Linear_indx = self.Linear_indx)
+                                                             Linear_indx = self.Linear_indx,
+                                                             traffic_mask_indices=config.get('traffic_mask_indices'))
         self.Mixed_Att_Layer = Mixed_Attention_Layer(hidden_size = 3*self.hidden_size, num_att_heads = num_heads)
 
 
