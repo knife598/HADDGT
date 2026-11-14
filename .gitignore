@@ -4,6 +4,8 @@ sinD/
 misc/
 Other/
 outputs/
+logs/
+data/
 # Add new files to the .gitignore file on main
 *.pt
 *.pth

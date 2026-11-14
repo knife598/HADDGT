@@ -1,0 +1,88 @@
+# ============================================================
+# HDAAGT-revise | SinD | 3s-3s | 第 2 组：22 通道 + CE+λ·L1（已知 ADE 9.437 / FDE 9.793）
+# 启动：nohup python main.py -c configs/config_sind_l1.yaml > logs/sind_l1.log 2>&1 &
+#
+# 本配置依赖改造后的代码（utilz/features.py 的 REGISTRY 自动算通道数）：
+#   通道数 = 7 原始 + 8 base + 7 kinematicsfalse → input_size = 22
+#   连续分支 Linear_indx 由 utilz/layout.py 自动写成本配置里的值，改特征不必改这个文件
+# ============================================================
+
+model_name: "HDAAGT"
+description: "EVAL-ONLY | 22ch ce_l1 0.3 权重 | 解码=expect | SinD 3s-3s | Nnodes64 | seed42 | cuda:1"
+verbal: true
+
+detection_path: '/home/ky1/sjkx/data/Fisheye-sinD.csv'
+Zoneconf_path: 'configs/ZoneConf.yaml'
+generate_data: true      # 必须重建 22 通道 Pickled（当前缓存是 30 通道的）
+Load_Model: true
+Load_Model_Path: 'Pickled/best_trained_model10-20-17-01.pth'
+Train: false
+Test: true
+Test_during_training: false
+
+# ---------- 模型结构 ----------
+hidden_size: 128
+num_heads: 4
+Nusers: 64
+Nnodes: 64
+concat: False
+dropout: 0.2
+output_dict_size: 1024
+
+# ---------- 数据列与嵌入（与论文一致） ----------
+Headers: ['Frame', 'ID', 'BBx', 'BBy','W', 'L' , 'Cls','Tr1', 'Tr2', 'Tr3', 'Tr4', 'Zone', 'Xreal', 'Yreal']
+Columns_to_keep: [2, 3, 11, 7, 8, 9, 10]
+
+trf_embedding_dict_size: [12, 9, 9, 9, 9]
+trf_embedding_dim: [48, 40, 40, 40, 40]
+
+pos_embedding_dict_size: [1024, 1024]
+pos_embedding_dim: [128, 128]
+xy_indx: [0, 1]
+Traffic_indx: [2, 3, 4, 5, 6]
+Linear_indx: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+
+sos: [1008, 1008, 10, 7, 7, 7, 7]
+eos: [1016, 1016, 11, 8, 8, 8, 8]
+NZones: 10
+NTrfL: 4
+
+# ---------- 时序窗口 ----------
+sl: 30
+future: 30
+sw: 4
+sn: 10
+Centre: [512, 512]
+dwn_smple: 2
+
+# ---------- 数据增强 ----------
+noise_multiply: 5
+noise_amp: 3
+noise_ratio: 0.5
+
+# ---------- 训练 ----------
+learning_rate: !!float 8e-4
+schd_stepzise: 12
+gamma: 0.2
+epochs: 45
+patience_limit: 5
+clip: 0.25
+batch_size: 128
+device: 'cuda:1'
+seed: 42
+
+# ---------- 特征开关（utilz/features.py 的 REGISTRY 读这两个键） ----------
+use_kinematics: true         # 7 个运动学特征（ax/ay/vx3/vy3/turn_sin/turn_cos/dspeed）
+use_road_state: false     # 8 个道路状态特征（occ/zone_cnt/zone_stop/zone_speed/near_cnt/age/is_new/frame_frac）
+stop_speed_px: 0.5           # road_state 用：速度低于多少算"停驶"
+near_radius_px: 100.0        # road_state 用：局部拥挤的半径
+
+# ---------- 损失（utilz/losses.py） ----------
+loss_type: 'ce_l1'      # 'ce' = 纯交叉熵；'ce_l1' = CE + λ·L1(期望位置)
+mask_empty_in_loss: true     # 空槽不进 loss（实验 A）
+expect_l1_lambda: 0.3         # 距离项权重（loss_type='ce' 时忽略）
+expect_l1_scale: 50.0        # 像素→CE 量纲的折算常数
+decode_mode: 'expect'      # 解码口径：topk5(默认) / argmax / expect
+
+# ---------- 其他 ----------
+save_loss_threshold: 3.0     # 最终 loss 低于它才保存模型（原代码写死 1.5）
